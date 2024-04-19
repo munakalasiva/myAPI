@@ -5,8 +5,12 @@ const bcrypt = require("bcrypt");
 
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
+
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 const dbPath = path.join(__dirname, "createApi.db");
 
@@ -19,8 +23,8 @@ const initializeDBAndServer = async () => {
       driver: sqlite3.Database,
     });
 
-    app.listen(3000, () => {
-      console.log("Server Running at http://localhost:3000/");
+    app.listen(3002, () => {
+      console.log("Server Running at http://localhost:3002/");
     });
   } catch (e) {
     console.log(`DB Error: ${e.message}`);
@@ -67,7 +71,11 @@ app.post("/login", async (request, response) => {
   } else {
     const isPasswordMatched = await bcrypt.compare(password, dbUser.password);
     if (isPasswordMatched === true) {
-      response.send("Login Success!");
+      const payload = {
+        username: username,
+      };
+      const jwtToken = jwt.sign(payload, "secret_token");
+      response.send({ jwtToken });
     } else {
       response.status(400);
       response.send("Invalid Password");
